@@ -120,13 +120,20 @@ button:disabled {
 
 .primary {
   width: 100%;
-  margin-top: 12px;
   background: var(--accent);
   color: #fffaf6;
 }
 
 .primary:hover {
   background: var(--accent-strong);
+}
+
+.secondary {
+  width: 100%;
+  margin-top: 12px;
+  background: #fff7f0;
+  color: var(--accent-strong);
+  border: 1px solid var(--panel-border);
 }
 
 .ghost {

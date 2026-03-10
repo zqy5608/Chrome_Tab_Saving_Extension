@@ -1,4 +1,5 @@
 const collectionNameInput = document.querySelector("#collection-name");
+const quickSaveButton = document.querySelector("#quick-save-button");
 const saveButton = document.querySelector("#save-button");
 const exportButton = document.querySelector("#export-button");
 const importButton = document.querySelector("#import-button");
@@ -10,6 +11,18 @@ const statusMessage = document.querySelector("#status-message");
 const template = document.querySelector("#collection-item-template");
 
 initialize().catch(showError);
+
+quickSaveButton.addEventListener("click", async () => {
+  try {
+    await withButtonBusy(quickSaveButton, "保存中...", async () => {
+      const collections = await sendMessage("SAVE_CURRENT_WINDOW");
+      renderCollections(collections);
+      showStatus("当前已打开的全部 Tab 已一键保存。");
+    });
+  } catch (error) {
+    showError(error);
+  }
+});
 
 saveButton.addEventListener("click", async () => {
   try {
