@@ -1,0 +1,239 @@
+import { getTranslator } from "./i18n.js";
+
+const COLLECTIONS_KEY = "tabSaverCollections";
+const LEGACY_SESSIONS_KEY = "savedTabSessions";
+
+export async function getCollections() {
+  const stored = await chrome.storage.local.get([COLLECTIONS_KEY, LEGACY_SESSIONS_KEY]);
+  const collections = stored[COLLECTIONS_KEY];
+
+  if (Array.isArray(collections)) {
+    return sortCollections(collections);
+  }
+
+  const { t } = await getTranslator();
+  const legacySessions = Array.isArray(stored[LEGACY_SESSIONS_KEY]) ? stored[LEGACY_SESSIONS_KEY] : [];
+  const migratedCollections = legacySessions.map((session) => normalizeLegacySession(session, t));
+
+  await chrome.storage.local.set({
+    [COLLECTIONS_KEY]: migratedCollections
+  });
+
+  return sortCollections(migratedCollections);
+}
+
+export async function createCollection(collectionInput) {
+  const { t } = await getTranslator();
+  const collections = await getCollections();
+  const now = new Date().toISOString();
+  const collection = {
+    id: collectionInput.id ?? crypto.randomUUID(),
+    name: collectionInput.name?.trim() || t("defaultUntitledCollection"),
+    pinned: Boolean(collectionInput.pinned),
+    locked: Boolean(collectionInput.locked),
+    createdAt: collectionInput.createdAt ?? now,
+    updatedAt: collectionInput.updatedAt ?? now,
+    tabs: normalizeTabs(collectionInput.tabs, t)
+  };
+
+  const nextCollections = sortCollections([collection, ...collections]);
+  await persistCollections(nextCollections);
+  return nextCollections;
+}
+
+export async function updateCollection(collectionId, updates) {
+  const { t } = await getTranslator();
+  const collections = await getCollections();
+  const now = new Date().toISOString();
+  let found = false;
+
+  const nextCollections = sortCollections(
+    collections.map((collection) => {
+      if (collection.id !== collectionId) {
+        return collection;
+      }
+
+      found = true;
+      ensureUnlocked(collection, t);
+
+      return {
+        ...collection,
+        name: updates?.name?.trim() || collection.name,
+        tabs: Array.isArray(updates?.tabs) ? normalizeTabs(updates.tabs, t) : collection.tabs,
+        updatedAt: now
+      };
+    })
+  );
+
+  if (!found) {
+    throw new Error(t("errorCollectionNotFound"));
+  }
+
+  await persistCollections(nextCollections);
+  return nextCollections;
+}
+
+export async function deleteCollection(collectionId) {
+  const { t } = await getTranslator();
+  const collections = await getCollections();
+  const collection = collections.find((item) => item.id === collectionId);
+  if (!collection) {
+    throw new Error(t("errorCollectionNotFound"));
+  }
+  ensureUnlocked(collection, t);
+  const nextCollections = collections.filter((item) => item.id !== collectionId);
+
+  await persistCollections(nextCollections);
+  return nextCollections;
+}
+
+export async function toggleCollectionPinned(collectionId) {
+  const { t } = await getTranslator();
+  const collections = await getCollections();
+  const nextCollections = sortCollections(
+    collections.map((collection) => {
+      if (collection.id !== collectionId) {
+        return collection;
+      }
+
+      ensureUnlocked(collection, t);
+
+      return {
+        ...collection,
+        pinned: !collection.pinned,
+        updatedAt: new Date().toISOString()
+      };
+    })
+  );
+
+  await persistCollections(nextCollections);
+  return nextCollections;
+}
+
+export async function toggleCollectionLocked(collectionId) {
+  const { t } = await getTranslator();
+  const collections = await getCollections();
+  let found = false;
+
+  const nextCollections = sortCollections(
+    collections.map((collection) => {
+      if (collection.id !== collectionId) {
+        return collection;
+      }
+
+      found = true;
+
+      return {
+        ...collection,
+        locked: !collection.locked,
+        updatedAt: new Date().toISOString()
+      };
+    })
+  );
+
+  if (!found) {
+    throw new Error(t("errorCollectionNotFound"));
+  }
+
+  await persistCollections(nextCollections);
+  return nextCollections;
+}
+
+export async function exportCollections() {
+  const collections = await getCollections();
+
+  return {
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    collections
+  };
+}
+
+export async function importCollections(importPayload) {
+  const { t } = await getTranslator();
+  const importedCollections = normalizeImportedCollections(importPayload, t);
+  const currentCollections = await getCollections();
+  const collectionMap = new Map();
+
+  for (const collection of currentCollections) {
+    collectionMap.set(collection.id, collection);
+  }
+
+  for (const collection of importedCollections) {
+    collectionMap.set(collection.id, collection);
+  }
+
+  const nextCollections = sortCollections([...collectionMap.values()]);
+  await persistCollections(nextCollections);
+  return nextCollections;
+}
+
+function normalizeImportedCollections(importPayload, t) {
+  const rawCollections = Array.isArray(importPayload?.collections)
+    ? importPayload.collections
+    : Array.isArray(importPayload)
+      ? importPayload
+      : null;
+
+  if (!rawCollections) {
+    throw new Error(t("errorImportInvalid"));
+  }
+
+  return rawCollections.map((collection) => ({
+    id: collection.id ?? crypto.randomUUID(),
+    name: collection.name?.trim() || t("defaultImportedCollection"),
+    pinned: Boolean(collection.pinned),
+    locked: Boolean(collection.locked),
+    createdAt: collection.createdAt ?? new Date().toISOString(),
+    updatedAt: collection.updatedAt ?? collection.createdAt ?? new Date().toISOString(),
+    tabs: normalizeTabs(collection.tabs, t)
+  }));
+}
+
+function normalizeLegacySession(session, t) {
+  return {
+    id: session.id ?? crypto.randomUUID(),
+    name: session.name?.trim() || t("defaultImportedSession"),
+    pinned: false,
+    locked: false,
+    createdAt: session.createdAt ?? new Date().toISOString(),
+    updatedAt: session.createdAt ?? new Date().toISOString(),
+    tabs: normalizeTabs(session.tabs, t)
+  };
+}
+
+function normalizeTabs(tabs, t) {
+  if (!Array.isArray(tabs)) {
+    return [];
+  }
+
+  return tabs
+    .map((tab) => ({
+      title: tab?.title || t("defaultUntitledTab"),
+      url: typeof tab?.url === "string" ? tab.url : "",
+      favIconUrl: typeof tab?.favIconUrl === "string" ? tab.favIconUrl : ""
+    }))
+    .filter((tab) => tab.url);
+}
+
+async function persistCollections(collections) {
+  await chrome.storage.local.set({
+    [COLLECTIONS_KEY]: collections
+  });
+}
+
+function sortCollections(collections) {
+  return [...collections].sort((left, right) => {
+    if (left.pinned !== right.pinned) {
+      return Number(right.pinned) - Number(left.pinned);
+    }
+
+    return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+  });
+}
+
+function ensureUnlocked(collection, t) {
+  if (collection.locked) {
+    throw new Error(t("errorCollectionLocked"));
+  }
+}

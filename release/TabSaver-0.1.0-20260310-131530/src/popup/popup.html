@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="extensionShortTitle">Tab Saver</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <section class="hero">
+        <p class="eyebrow" data-i18n="heroEyebrow">Chrome Extension</p>
+        <h1 data-i18n="heroTitle">Tab Favorites</h1>
+        <p class="subtitle" data-i18n="heroSubtitle">Save tabs permanently, organize them into favorites, and reopen them with one click.</p>
+      </section>
+
+      <section class="settings">
+        <label class="field language-field">
+          <span data-i18n="languageSettingLabel">Language</span>
+          <select id="language-select">
+            <option value="en">English</option>
+            <option value="zh_CN">中文</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="actions">
+        <div class="toolbar">
+          <button id="export-button" class="ghost" data-i18n="exportData">Export data</button>
+          <button id="import-button" class="ghost" data-i18n="importData">Import data</button>
+          <input id="import-file" type="file" accept="application/json" hidden />
+        </div>
+
+        <div class="save-actions">
+          <button id="save-current-tab-button" class="primary" data-i18n="saveCurrentTab">Save current visible tab</button>
+          <button id="save-all-tabs-button" class="secondary" data-i18n="saveAllTabs">Save all open tabs</button>
+        </div>
+        <p id="status-message" class="status-message" hidden></p>
+      </section>
+
+      <section class="collections">
+        <div class="section-header">
+          <h2 data-i18n="myFavorites">My favorites</h2>
+          <span id="collection-count" class="count">0</span>
+        </div>
+        <div id="empty-state" class="empty-state" data-i18n="emptyState">No favorites yet. Try saving the current window first.</div>
+        <ul id="collection-list" class="collection-list"></ul>
+      </section>
+    </main>
+
+    <template id="collection-item-template">
+      <li class="collection-item">
+        <div class="collection-top">
+          <div class="collection-meta">
+            <p class="collection-name"></p>
+            <div class="collection-badges-row">
+              <span class="pin-badge" data-i18n="pinBadge" hidden>Pinned</span>
+              <span class="lock-badge" data-i18n="lockBadge" hidden>Locked</span>
+            </div>
+            <p class="collection-tab-count"></p>
+            <p class="collection-updated-at"></p>
+          </div>
+          <div class="button-row">
+            <button class="ghost" data-role="open" data-i18n="open">Open</button>
+            <button class="ghost" data-role="toggle-edit" data-i18n="edit">Edit</button>
+            <button class="ghost" data-role="toggle-lock" data-i18n="lock">Lock</button>
+            <button class="ghost" data-role="pin" data-i18n="pin">Pin</button>
+            <button class="ghost danger" data-role="delete" data-i18n="delete">Delete</button>
+          </div>
+        </div>
+        <div class="collection-divider" aria-hidden="true"></div>
+        <ol class="tab-preview"></ol>
+        <button class="ghost expand-toggle" data-role="toggle-preview" hidden></button>
+        <form class="editor" hidden>
+          <label class="field">
+            <span data-i18n="favoritesName">Favorites name</span>
+            <input class="collection-edit-name" type="text" />
+          </label>
+          <div class="editor-header">
+            <span data-i18n="itemList">Items</span>
+            <button type="button" class="ghost small-button" data-role="add-tab" data-i18n="addItem">Add item</button>
+          </div>
+          <div class="editor-tabs"></div>
+          <div class="editor-actions">
+            <button type="submit" class="secondary" data-i18n="saveChanges">Save changes</button>
+            <button type="button" class="ghost" data-role="cancel-edit" data-i18n="cancel">Cancel</button>
+          </div>
+        </form>
+      </li>
+    </template>
+
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>
