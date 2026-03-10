@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tab Saver</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <section class="hero">
+        <p class="eyebrow">Chrome Extension</p>
+        <h1>Tab Saver</h1>
+        <p class="subtitle">Save the current window now, polish the workflow next.</p>
+      </section>
+
+      <section class="actions">
+        <label class="field">
+          <span>Session name</span>
+          <input id="session-name" type="text" placeholder="Optional custom name" />
+        </label>
+        <button id="save-button" class="primary">Save current window</button>
+      </section>
+
+      <section class="sessions">
+        <div class="section-header">
+          <h2>Saved sessions</h2>
+          <span id="session-count" class="count">0</span>
+        </div>
+        <div id="empty-state" class="empty-state">No sessions yet.</div>
+        <ul id="session-list" class="session-list"></ul>
+      </section>
+    </main>
+
+    <template id="session-item-template">
+      <li class="session-item">
+        <div class="session-meta">
+          <p class="session-name"></p>
+          <p class="session-detail"></p>
+        </div>
+        <button class="ghost danger" data-role="delete">Delete</button>
+      </li>
+    </template>
+
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>

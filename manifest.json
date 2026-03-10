@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Saver Starter",
+  "description": "A foundation for saving and restoring Chrome tabs.",
+  "version": "0.1.0",
+  "permissions": ["tabs", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Tab Saver",
+    "default_popup": "src/popup/popup.html"
+  }
+}
