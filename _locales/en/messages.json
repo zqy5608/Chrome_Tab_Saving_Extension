@@ -9,13 +9,17 @@
   "importData": { "message": "Import data" },
   "saveCurrentTab": { "message": "Save current visible tab" },
   "saveAllTabs": { "message": "Save all open tabs" },
+  "languageSettingLabel": { "message": "Language" },
   "favoritesName": { "message": "Favorites name" },
   "myFavorites": { "message": "My favorites" },
   "emptyState": { "message": "No favorites yet. Try saving the current window first." },
   "pinBadge": { "message": "Pinned" },
+  "lockBadge": { "message": "Locked" },
   "open": { "message": "Open" },
   "edit": { "message": "Edit" },
   "collapse": { "message": "Collapse" },
+  "lock": { "message": "Lock" },
+  "unlock": { "message": "Unlock" },
   "pin": { "message": "Pin" },
   "unpin": { "message": "Unpin" },
   "delete": { "message": "Delete" },
@@ -32,11 +36,13 @@
   "statusImported": { "message": "Import complete. Favorites have been merged into current data." },
   "statusOpenedFavorite": { "message": "This favorite has been opened in a new window." },
   "statusPinUpdated": { "message": "Favorite pin status has been updated." },
+  "statusLockUpdated": { "message": "Favorite lock status has been updated." },
   "statusDeletedFavorite": { "message": "Favorite has been deleted." },
   "statusSavedChanges": { "message": "Favorite changes have been saved." },
+  "confirmDeleteFavorite": { "message": "Delete this favorite? This action cannot be undone." },
   "unknownError": { "message": "An unknown error occurred." },
-  "detailTabsUpdatedAt": {
-    "message": "$COUNT$ tabs | $DATE$",
+  "tabCountLabel": {
+    "message": "$COUNT$ tabs",
     "placeholders": {
       "count": { "content": "$1" },
       "date": { "content": "$2" }
@@ -49,6 +55,8 @@
       "count": { "content": "$1" }
     }
   },
+  "expandTabs": { "message": "Show all tabs" },
+  "collapseTabs": { "message": "Collapse tabs" },
   "itemTitlePlaceholder": { "message": "Item title" },
   "itemUrlPlaceholder": { "message": "https://example.com" },
   "deleteItem": { "message": "Delete item" },
@@ -66,6 +74,7 @@
   },
   "errorUnsupportedMessage": { "message": "Unsupported message type." },
   "errorCollectionNotFound": { "message": "Favorite not found." },
+  "errorCollectionLocked": { "message": "This favorite is locked. Unlock it before making changes." },
   "errorNoValidTabs": { "message": "This favorite has no valid tabs." },
   "errorImportInvalid": { "message": "Import file is invalid." },
   "defaultUntitledCollection": { "message": "Untitled Favorite" },

@@ -1,9 +1,11 @@
+import { getTranslator } from "./lib/i18n.js";
 import {
   createCollection,
   deleteCollection,
   exportCollections,
   getCollections,
   importCollections,
+  toggleCollectionLocked,
   updateCollection,
   toggleCollectionPinned
 } from "./lib/storage.js";
@@ -24,19 +26,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function handleMessage(message) {
+  const { t } = await getTranslator();
+
   switch (message?.type) {
     case "GET_COLLECTIONS":
       return getCollections();
     case "SAVE_CURRENT_TAB":
-      return saveCurrentTab();
+      return saveCurrentTab(t);
     case "SAVE_ALL_TABS":
-      return saveAllTabs();
+      return saveAllTabs(t);
     case "OPEN_COLLECTION":
-      return openCollection(message.payload?.collectionId);
+      return openCollection(message.payload?.collectionId, t);
     case "UPDATE_COLLECTION":
       return updateCollection(message.payload?.collectionId, message.payload?.updates);
     case "DELETE_COLLECTION":
       return deleteCollection(message.payload?.collectionId);
+    case "TOGGLE_COLLECTION_LOCKED":
+      return toggleCollectionLocked(message.payload?.collectionId);
     case "TOGGLE_COLLECTION_PINNED":
       return toggleCollectionPinned(message.payload?.collectionId);
     case "EXPORT_DATA":
@@ -48,7 +54,7 @@ async function handleMessage(message) {
   }
 }
 
-async function saveCurrentTab() {
+async function saveCurrentTab(t) {
   const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
   const now = new Date();
   const currentTab = activeTabs[0];
@@ -67,7 +73,7 @@ async function saveCurrentTab() {
   });
 }
 
-async function saveAllTabs() {
+async function saveAllTabs(t) {
   const tabs = await chrome.tabs.query({});
   const now = new Date();
 
@@ -81,7 +87,7 @@ async function saveAllTabs() {
   });
 }
 
-async function openCollection(collectionId) {
+async function openCollection(collectionId, t) {
   const collections = await getCollections();
   const collection = collections.find((item) => item.id === collectionId);
 
@@ -96,8 +102,4 @@ async function openCollection(collectionId) {
 
   await chrome.windows.create({ url: urls });
   return collections;
-}
-
-function t(key, substitutions) {
-  return chrome.i18n.getMessage(key, substitutions) || key;
 }

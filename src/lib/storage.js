@@ -1,3 +1,5 @@
+import { getTranslator } from "./i18n.js";
+
 const COLLECTIONS_KEY = "tabSaverCollections";
 const LEGACY_SESSIONS_KEY = "savedTabSessions";
 
@@ -9,8 +11,9 @@ export async function getCollections() {
     return sortCollections(collections);
   }
 
+  const { t } = await getTranslator();
   const legacySessions = Array.isArray(stored[LEGACY_SESSIONS_KEY]) ? stored[LEGACY_SESSIONS_KEY] : [];
-  const migratedCollections = legacySessions.map(normalizeLegacySession);
+  const migratedCollections = legacySessions.map((session) => normalizeLegacySession(session, t));
 
   await chrome.storage.local.set({
     [COLLECTIONS_KEY]: migratedCollections
@@ -20,15 +23,17 @@ export async function getCollections() {
 }
 
 export async function createCollection(collectionInput) {
+  const { t } = await getTranslator();
   const collections = await getCollections();
   const now = new Date().toISOString();
   const collection = {
     id: collectionInput.id ?? crypto.randomUUID(),
     name: collectionInput.name?.trim() || t("defaultUntitledCollection"),
     pinned: Boolean(collectionInput.pinned),
+    locked: Boolean(collectionInput.locked),
     createdAt: collectionInput.createdAt ?? now,
     updatedAt: collectionInput.updatedAt ?? now,
-    tabs: normalizeTabs(collectionInput.tabs)
+    tabs: normalizeTabs(collectionInput.tabs, t)
   };
 
   const nextCollections = sortCollections([collection, ...collections]);
@@ -37,6 +42,7 @@ export async function createCollection(collectionInput) {
 }
 
 export async function updateCollection(collectionId, updates) {
+  const { t } = await getTranslator();
   const collections = await getCollections();
   const now = new Date().toISOString();
   let found = false;
@@ -48,11 +54,12 @@ export async function updateCollection(collectionId, updates) {
       }
 
       found = true;
+      ensureUnlocked(collection, t);
 
       return {
         ...collection,
         name: updates?.name?.trim() || collection.name,
-        tabs: Array.isArray(updates?.tabs) ? normalizeTabs(updates.tabs) : collection.tabs,
+        tabs: Array.isArray(updates?.tabs) ? normalizeTabs(updates.tabs, t) : collection.tabs,
         updatedAt: now
       };
     })
@@ -67,26 +74,66 @@ export async function updateCollection(collectionId, updates) {
 }
 
 export async function deleteCollection(collectionId) {
+  const { t } = await getTranslator();
   const collections = await getCollections();
-  const nextCollections = collections.filter((collection) => collection.id !== collectionId);
+  const collection = collections.find((item) => item.id === collectionId);
+  if (!collection) {
+    throw new Error(t("errorCollectionNotFound"));
+  }
+  ensureUnlocked(collection, t);
+  const nextCollections = collections.filter((item) => item.id !== collectionId);
 
   await persistCollections(nextCollections);
   return nextCollections;
 }
 
 export async function toggleCollectionPinned(collectionId) {
+  const { t } = await getTranslator();
   const collections = await getCollections();
   const nextCollections = sortCollections(
-    collections.map((collection) =>
-      collection.id === collectionId
-        ? {
-            ...collection,
-            pinned: !collection.pinned,
-            updatedAt: new Date().toISOString()
-          }
-        : collection
-    )
+    collections.map((collection) => {
+      if (collection.id !== collectionId) {
+        return collection;
+      }
+
+      ensureUnlocked(collection, t);
+
+      return {
+        ...collection,
+        pinned: !collection.pinned,
+        updatedAt: new Date().toISOString()
+      };
+    })
   );
+
+  await persistCollections(nextCollections);
+  return nextCollections;
+}
+
+export async function toggleCollectionLocked(collectionId) {
+  const { t } = await getTranslator();
+  const collections = await getCollections();
+  let found = false;
+
+  const nextCollections = sortCollections(
+    collections.map((collection) => {
+      if (collection.id !== collectionId) {
+        return collection;
+      }
+
+      found = true;
+
+      return {
+        ...collection,
+        locked: !collection.locked,
+        updatedAt: new Date().toISOString()
+      };
+    })
+  );
+
+  if (!found) {
+    throw new Error(t("errorCollectionNotFound"));
+  }
 
   await persistCollections(nextCollections);
   return nextCollections;
@@ -103,7 +150,8 @@ export async function exportCollections() {
 }
 
 export async function importCollections(importPayload) {
-  const importedCollections = normalizeImportedCollections(importPayload);
+  const { t } = await getTranslator();
+  const importedCollections = normalizeImportedCollections(importPayload, t);
   const currentCollections = await getCollections();
   const collectionMap = new Map();
 
@@ -120,7 +168,7 @@ export async function importCollections(importPayload) {
   return nextCollections;
 }
 
-function normalizeImportedCollections(importPayload) {
+function normalizeImportedCollections(importPayload, t) {
   const rawCollections = Array.isArray(importPayload?.collections)
     ? importPayload.collections
     : Array.isArray(importPayload)
@@ -135,24 +183,26 @@ function normalizeImportedCollections(importPayload) {
     id: collection.id ?? crypto.randomUUID(),
     name: collection.name?.trim() || t("defaultImportedCollection"),
     pinned: Boolean(collection.pinned),
+    locked: Boolean(collection.locked),
     createdAt: collection.createdAt ?? new Date().toISOString(),
     updatedAt: collection.updatedAt ?? collection.createdAt ?? new Date().toISOString(),
-    tabs: normalizeTabs(collection.tabs)
+    tabs: normalizeTabs(collection.tabs, t)
   }));
 }
 
-function normalizeLegacySession(session) {
+function normalizeLegacySession(session, t) {
   return {
     id: session.id ?? crypto.randomUUID(),
     name: session.name?.trim() || t("defaultImportedSession"),
     pinned: false,
+    locked: false,
     createdAt: session.createdAt ?? new Date().toISOString(),
     updatedAt: session.createdAt ?? new Date().toISOString(),
-    tabs: normalizeTabs(session.tabs)
+    tabs: normalizeTabs(session.tabs, t)
   };
 }
 
-function normalizeTabs(tabs) {
+function normalizeTabs(tabs, t) {
   if (!Array.isArray(tabs)) {
     return [];
   }
@@ -182,6 +232,8 @@ function sortCollections(collections) {
   });
 }
 
-function t(key, substitutions) {
-  return chrome.i18n.getMessage(key, substitutions) || key;
+function ensureUnlocked(collection, t) {
+  if (collection.locked) {
+    throw new Error(t("errorCollectionLocked"));
+  }
 }
