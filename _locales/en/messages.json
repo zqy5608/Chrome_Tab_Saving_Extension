@@ -1,0 +1,75 @@
+{
+  "extensionName": { "message": "Tab Saver" },
+  "extensionShortTitle": { "message": "Tab Saver" },
+  "extensionDescription": { "message": "Save tabs permanently, organize them into favorites, and reopen them with one click." },
+  "heroEyebrow": { "message": "Chrome Extension" },
+  "heroTitle": { "message": "Tab Favorites" },
+  "heroSubtitle": { "message": "Save tabs permanently, organize them into favorites, and reopen them with one click." },
+  "exportData": { "message": "Export data" },
+  "importData": { "message": "Import data" },
+  "saveCurrentTab": { "message": "Save current visible tab" },
+  "saveAllTabs": { "message": "Save all open tabs" },
+  "favoritesName": { "message": "Favorites name" },
+  "myFavorites": { "message": "My favorites" },
+  "emptyState": { "message": "No favorites yet. Try saving the current window first." },
+  "pinBadge": { "message": "Pinned" },
+  "open": { "message": "Open" },
+  "edit": { "message": "Edit" },
+  "collapse": { "message": "Collapse" },
+  "pin": { "message": "Pin" },
+  "unpin": { "message": "Unpin" },
+  "delete": { "message": "Delete" },
+  "itemList": { "message": "Items" },
+  "addItem": { "message": "Add item" },
+  "saveChanges": { "message": "Save changes" },
+  "cancel": { "message": "Cancel" },
+  "saving": { "message": "Saving..." },
+  "exporting": { "message": "Exporting..." },
+  "opening": { "message": "Opening..." },
+  "statusSavedCurrentTab": { "message": "The current visible tab has been saved." },
+  "statusSavedAllTabs": { "message": "All open tabs have been saved." },
+  "statusExported": { "message": "Favorite data has been exported." },
+  "statusImported": { "message": "Import complete. Favorites have been merged into current data." },
+  "statusOpenedFavorite": { "message": "This favorite has been opened in a new window." },
+  "statusPinUpdated": { "message": "Favorite pin status has been updated." },
+  "statusDeletedFavorite": { "message": "Favorite has been deleted." },
+  "statusSavedChanges": { "message": "Favorite changes have been saved." },
+  "unknownError": { "message": "An unknown error occurred." },
+  "detailTabsUpdatedAt": {
+    "message": "$COUNT$ tabs | $DATE$",
+    "placeholders": {
+      "count": { "content": "$1" },
+      "date": { "content": "$2" }
+    }
+  },
+  "previewEmptyFavorite": { "message": "There are no openable tabs in this favorite yet." },
+  "previewMoreTabs": {
+    "message": "$COUNT$ more tabs...",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "itemTitlePlaceholder": { "message": "Item title" },
+  "itemUrlPlaceholder": { "message": "https://example.com" },
+  "deleteItem": { "message": "Delete item" },
+  "defaultCurrentTabCollectionName": {
+    "message": "Current Tab $DATE$",
+    "placeholders": {
+      "date": { "content": "$1" }
+    }
+  },
+  "defaultAllTabsCollectionName": {
+    "message": "All Tabs $DATE$",
+    "placeholders": {
+      "date": { "content": "$1" }
+    }
+  },
+  "errorUnsupportedMessage": { "message": "Unsupported message type." },
+  "errorCollectionNotFound": { "message": "Favorite not found." },
+  "errorNoValidTabs": { "message": "This favorite has no valid tabs." },
+  "errorImportInvalid": { "message": "Import file is invalid." },
+  "defaultUntitledCollection": { "message": "Untitled Favorite" },
+  "defaultImportedCollection": { "message": "Imported Favorite" },
+  "defaultImportedSession": { "message": "Imported Session" },
+  "defaultUntitledTab": { "message": "Untitled Tab" }
+}

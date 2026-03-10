@@ -24,7 +24,7 @@ export async function createCollection(collectionInput) {
   const now = new Date().toISOString();
   const collection = {
     id: collectionInput.id ?? crypto.randomUUID(),
-    name: collectionInput.name?.trim() || "Untitled Collection",
+    name: collectionInput.name?.trim() || t("defaultUntitledCollection"),
     pinned: Boolean(collectionInput.pinned),
     createdAt: collectionInput.createdAt ?? now,
     updatedAt: collectionInput.updatedAt ?? now,
@@ -32,6 +32,36 @@ export async function createCollection(collectionInput) {
   };
 
   const nextCollections = sortCollections([collection, ...collections]);
+  await persistCollections(nextCollections);
+  return nextCollections;
+}
+
+export async function updateCollection(collectionId, updates) {
+  const collections = await getCollections();
+  const now = new Date().toISOString();
+  let found = false;
+
+  const nextCollections = sortCollections(
+    collections.map((collection) => {
+      if (collection.id !== collectionId) {
+        return collection;
+      }
+
+      found = true;
+
+      return {
+        ...collection,
+        name: updates?.name?.trim() || collection.name,
+        tabs: Array.isArray(updates?.tabs) ? normalizeTabs(updates.tabs) : collection.tabs,
+        updatedAt: now
+      };
+    })
+  );
+
+  if (!found) {
+    throw new Error(t("errorCollectionNotFound"));
+  }
+
   await persistCollections(nextCollections);
   return nextCollections;
 }
@@ -98,12 +128,12 @@ function normalizeImportedCollections(importPayload) {
       : null;
 
   if (!rawCollections) {
-    throw new Error("Import file is invalid.");
+    throw new Error(t("errorImportInvalid"));
   }
 
   return rawCollections.map((collection) => ({
     id: collection.id ?? crypto.randomUUID(),
-    name: collection.name?.trim() || "Imported Collection",
+    name: collection.name?.trim() || t("defaultImportedCollection"),
     pinned: Boolean(collection.pinned),
     createdAt: collection.createdAt ?? new Date().toISOString(),
     updatedAt: collection.updatedAt ?? collection.createdAt ?? new Date().toISOString(),
@@ -114,7 +144,7 @@ function normalizeImportedCollections(importPayload) {
 function normalizeLegacySession(session) {
   return {
     id: session.id ?? crypto.randomUUID(),
-    name: session.name?.trim() || "Imported Session",
+    name: session.name?.trim() || t("defaultImportedSession"),
     pinned: false,
     createdAt: session.createdAt ?? new Date().toISOString(),
     updatedAt: session.createdAt ?? new Date().toISOString(),
@@ -129,7 +159,7 @@ function normalizeTabs(tabs) {
 
   return tabs
     .map((tab) => ({
-      title: tab?.title || "Untitled Tab",
+      title: tab?.title || t("defaultUntitledTab"),
       url: typeof tab?.url === "string" ? tab.url : "",
       favIconUrl: typeof tab?.favIconUrl === "string" ? tab.favIconUrl : ""
     }))
@@ -150,4 +180,8 @@ function sortCollections(collections) {
 
     return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
   });
+}
+
+function t(key, substitutions) {
+  return chrome.i18n.getMessage(key, substitutions) || key;
 }

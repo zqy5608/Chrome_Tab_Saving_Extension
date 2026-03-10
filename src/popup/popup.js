@@ -1,6 +1,5 @@
-const collectionNameInput = document.querySelector("#collection-name");
-const quickSaveButton = document.querySelector("#quick-save-button");
-const saveButton = document.querySelector("#save-button");
+const saveCurrentTabButton = document.querySelector("#save-current-tab-button");
+const saveAllTabsButton = document.querySelector("#save-all-tabs-button");
 const exportButton = document.querySelector("#export-button");
 const importButton = document.querySelector("#import-button");
 const importFileInput = document.querySelector("#import-file");
@@ -10,30 +9,29 @@ const collectionList = document.querySelector("#collection-list");
 const statusMessage = document.querySelector("#status-message");
 const template = document.querySelector("#collection-item-template");
 
+let editingCollectionId = null;
+
+applyStaticTranslations();
 initialize().catch(showError);
 
-quickSaveButton.addEventListener("click", async () => {
+saveCurrentTabButton.addEventListener("click", async () => {
   try {
-    await withButtonBusy(quickSaveButton, "保存中...", async () => {
-      const collections = await sendMessage("SAVE_CURRENT_WINDOW");
+    await withButtonBusy(saveCurrentTabButton, t("saving"), async () => {
+      const collections = await sendMessage("SAVE_CURRENT_TAB");
       renderCollections(collections);
-      showStatus("当前已打开的全部 Tab 已一键保存。");
+      showStatus(t("statusSavedCurrentTab"));
     });
   } catch (error) {
     showError(error);
   }
 });
 
-saveButton.addEventListener("click", async () => {
+saveAllTabsButton.addEventListener("click", async () => {
   try {
-    await withButtonBusy(saveButton, "保存中...", async () => {
-      const collections = await sendMessage("SAVE_CURRENT_WINDOW", {
-        name: collectionNameInput.value
-      });
-
-      collectionNameInput.value = "";
+    await withButtonBusy(saveAllTabsButton, t("saving"), async () => {
+      const collections = await sendMessage("SAVE_ALL_TABS");
       renderCollections(collections);
-      showStatus("当前窗口已保存到新的 Collection。");
+      showStatus(t("statusSavedAllTabs"));
     });
   } catch (error) {
     showError(error);
@@ -42,10 +40,10 @@ saveButton.addEventListener("click", async () => {
 
 exportButton.addEventListener("click", async () => {
   try {
-    await withButtonBusy(exportButton, "导出中...", async () => {
+    await withButtonBusy(exportButton, t("exporting"), async () => {
       const payload = await sendMessage("EXPORT_DATA");
       downloadJson(payload);
-      showStatus("收藏数据已导出。");
+      showStatus(t("statusExported"));
     });
   } catch (error) {
     showError(error);
@@ -67,7 +65,7 @@ importFileInput.addEventListener("change", async () => {
     const payload = JSON.parse(content);
     const collections = await sendMessage("IMPORT_DATA", payload);
     renderCollections(collections);
-    showStatus("导入完成，Collection 已合并到当前数据。");
+    showStatus(t("statusImported"));
   } catch (error) {
     showError(error);
   } finally {
@@ -81,34 +79,92 @@ collectionList.addEventListener("click", async (event) => {
     return;
   }
 
-  const collectionId = target.dataset.collectionId;
+  const role = target.dataset.role;
+  const collectionId =
+    target.dataset.collectionId || target.closest(".collection-item")?.querySelector(".editor")?.dataset.collectionId;
+
+  try {
+    switch (role) {
+      case "open":
+        if (!collectionId) {
+          return;
+        }
+        await withButtonBusy(target, t("opening"), async () => {
+          await sendMessage("OPEN_COLLECTION", { collectionId });
+          showStatus(t("statusOpenedFavorite"));
+        });
+        break;
+      case "toggle-edit":
+        if (!collectionId) {
+          return;
+        }
+        editingCollectionId = editingCollectionId === collectionId ? null : collectionId;
+        renderCollections(await sendMessage("GET_COLLECTIONS"));
+        break;
+      case "cancel-edit":
+        editingCollectionId = null;
+        renderCollections(await sendMessage("GET_COLLECTIONS"));
+        break;
+      case "add-tab":
+        addEditorTabRow(target.closest(".editor-tabs"));
+        break;
+      case "remove-tab":
+        target.closest(".editor-tab")?.remove();
+        break;
+      case "pin":
+        if (!collectionId) {
+          return;
+        }
+        renderCollections(await sendMessage("TOGGLE_COLLECTION_PINNED", { collectionId }));
+        showStatus(t("statusPinUpdated"));
+        break;
+      case "delete":
+        if (!collectionId) {
+          return;
+        }
+        renderCollections(await sendMessage("DELETE_COLLECTION", { collectionId }));
+        showStatus(t("statusDeletedFavorite"));
+        break;
+      default:
+        break;
+    }
+  } catch (error) {
+    showError(error);
+  }
+});
+
+collectionList.addEventListener("submit", async (event) => {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement)) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const collectionId = form.dataset.collectionId;
   if (!collectionId) {
     return;
   }
 
+  const nameInput = form.querySelector(".collection-edit-name");
+  const rows = [...form.querySelectorAll(".editor-tab")];
+  const tabs = rows.map((row) => ({
+    title: row.querySelector("[data-field='title']")?.value?.trim() || "",
+    url: row.querySelector("[data-field='url']")?.value?.trim() || ""
+  }));
+
   try {
-    switch (target.dataset.role) {
-      case "open":
-        await withButtonBusy(target, "打开中...", async () => {
-          await sendMessage("OPEN_COLLECTION", { collectionId });
-          showStatus("已在新窗口中打开这个 Collection。");
-        });
-        break;
-      case "pin": {
-        const collections = await sendMessage("TOGGLE_COLLECTION_PINNED", { collectionId });
-        renderCollections(collections);
-        showStatus("Collection 置顶状态已更新。");
-        break;
+    const collections = await sendMessage("UPDATE_COLLECTION", {
+      collectionId,
+      updates: {
+        name: nameInput?.value,
+        tabs
       }
-      case "delete": {
-        const collections = await sendMessage("DELETE_COLLECTION", { collectionId });
-        renderCollections(collections);
-        showStatus("Collection 已删除。");
-        break;
-      }
-      default:
-        break;
-    }
+    });
+
+    editingCollectionId = null;
+    renderCollections(collections);
+    showStatus(t("statusSavedChanges"));
   } catch (error) {
     showError(error);
   }
@@ -130,14 +186,23 @@ function renderCollections(collections) {
     const detail = fragment.querySelector(".collection-detail");
     const pinBadge = fragment.querySelector(".pin-badge");
     const preview = fragment.querySelector(".tab-preview");
+    const editor = fragment.querySelector(".editor");
+    const editorName = fragment.querySelector(".collection-edit-name");
+    const editorTabs = fragment.querySelector(".editor-tabs");
     const openButton = fragment.querySelector("[data-role='open']");
+    const editButton = fragment.querySelector("[data-role='toggle-edit']");
     const pinButton = fragment.querySelector("[data-role='pin']");
     const deleteButton = fragment.querySelector("[data-role='delete']");
 
+    applyTranslations(fragment);
+
     name.textContent = collection.name;
-    detail.textContent = `${collection.tabs.length} 个标签页 | ${formatDate(collection.updatedAt)}`;
+    detail.textContent = t("detailTabsUpdatedAt", [
+      String(collection.tabs.length),
+      formatDate(collection.updatedAt)
+    ]);
     pinBadge.hidden = !collection.pinned;
-    pinButton.textContent = collection.pinned ? "取消置顶" : "置顶";
+    pinButton.textContent = collection.pinned ? t("unpin") : t("pin");
 
     for (const tab of collection.tabs.slice(0, 3)) {
       const item = document.createElement("li");
@@ -147,26 +212,54 @@ function renderCollections(collections) {
 
     if (collection.tabs.length === 0) {
       const emptyPreview = document.createElement("li");
-      emptyPreview.textContent = "这个 Collection 里还没有可打开的标签页。";
+      emptyPreview.textContent = t("previewEmptyFavorite");
       preview.appendChild(emptyPreview);
     }
 
     if (collection.tabs.length > 3) {
       const more = document.createElement("li");
-      more.textContent = `还有 ${collection.tabs.length - 3} 个标签页...`;
+      more.textContent = t("previewMoreTabs", [String(collection.tabs.length - 3)]);
       preview.appendChild(more);
     }
 
     openButton.dataset.collectionId = collection.id;
+    editButton.dataset.collectionId = collection.id;
     pinButton.dataset.collectionId = collection.id;
     deleteButton.dataset.collectionId = collection.id;
+    editor.dataset.collectionId = collection.id;
+    editor.hidden = editingCollectionId !== collection.id;
+    editButton.textContent = editingCollectionId === collection.id ? t("collapse") : t("edit");
+    editorName.value = collection.name;
+
+    for (const tab of collection.tabs) {
+      addEditorTabRow(editorTabs, tab);
+    }
+
+    if (collection.tabs.length === 0) {
+      addEditorTabRow(editorTabs);
+    }
 
     collectionList.appendChild(fragment);
   }
 }
 
+function applyStaticTranslations() {
+  document.documentElement.lang = chrome.i18n.getUILanguage();
+  applyTranslations(document);
+}
+
+function applyTranslations(root) {
+  for (const element of root.querySelectorAll("[data-i18n]")) {
+    element.textContent = t(element.dataset.i18n);
+  }
+
+  for (const element of root.querySelectorAll("[data-i18n-placeholder]")) {
+    element.setAttribute("placeholder", t(element.dataset.i18nPlaceholder));
+  }
+}
+
 function formatDate(isoString) {
-  return new Date(isoString).toLocaleString();
+  return new Date(isoString).toLocaleString(chrome.i18n.getUILanguage());
 }
 
 function downloadJson(payload) {
@@ -191,7 +284,35 @@ function showStatus(message) {
 function showError(error) {
   console.error(error);
   statusMessage.hidden = false;
-  statusMessage.textContent = error.message || "发生未知错误。";
+  statusMessage.textContent = error.message || t("unknownError");
+}
+
+function addEditorTabRow(container, tab = {}) {
+  if (!container) {
+    return;
+  }
+
+  const row = document.createElement("div");
+  row.className = "editor-tab";
+  row.innerHTML = `
+    <div class="editor-tab-grid">
+      <input type="text" data-field="title" placeholder="${escapeHtml(t("itemTitlePlaceholder"))}" value="${escapeHtml(tab.title || "")}" />
+      <input type="url" data-field="url" placeholder="${escapeHtml(t("itemUrlPlaceholder"))}" value="${escapeHtml(tab.url || "")}" />
+    </div>
+    <div class="editor-tab-actions">
+      <button type="button" class="ghost danger small-button" data-role="remove-tab">${escapeHtml(t("deleteItem"))}</button>
+    </div>
+  `;
+
+  container.appendChild(row);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 async function withButtonBusy(button, busyText, action) {
@@ -216,11 +337,15 @@ function sendMessage(type, payload = {}) {
       }
 
       if (!response?.ok) {
-        reject(new Error(response?.error || "Unknown error."));
+        reject(new Error(response?.error || t("unknownError")));
         return;
       }
 
       resolve(response.data);
     });
   });
+}
+
+function t(key, substitutions) {
+  return chrome.i18n.getMessage(key, substitutions) || key;
 }

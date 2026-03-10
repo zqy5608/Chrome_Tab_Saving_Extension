@@ -1,0 +1,75 @@
+{
+  "extensionName": { "message": "Tab Saver" },
+  "extensionShortTitle": { "message": "Tab Saver" },
+  "extensionDescription": { "message": "永久保存标签页，按收藏夹分类管理，并支持一键重新打开。" },
+  "heroEyebrow": { "message": "Chrome 扩展" },
+  "heroTitle": { "message": "Tab 收藏夹" },
+  "heroSubtitle": { "message": "永久保存标签页，按收藏夹分类管理，一键重新打开。" },
+  "exportData": { "message": "导出数据" },
+  "importData": { "message": "导入数据" },
+  "saveCurrentTab": { "message": "保存当前显示的 Tab" },
+  "saveAllTabs": { "message": "保存所有已打开 Tab" },
+  "favoritesName": { "message": "收藏夹名称" },
+  "myFavorites": { "message": "我的收藏夹" },
+  "emptyState": { "message": "还没有收藏，先保存当前窗口试试看。" },
+  "pinBadge": { "message": "置顶" },
+  "open": { "message": "打开" },
+  "edit": { "message": "编辑" },
+  "collapse": { "message": "收起" },
+  "pin": { "message": "置顶" },
+  "unpin": { "message": "取消置顶" },
+  "delete": { "message": "删除" },
+  "itemList": { "message": "条目列表" },
+  "addItem": { "message": "添加条目" },
+  "saveChanges": { "message": "保存修改" },
+  "cancel": { "message": "取消" },
+  "saving": { "message": "保存中..." },
+  "exporting": { "message": "导出中..." },
+  "opening": { "message": "打开中..." },
+  "statusSavedCurrentTab": { "message": "当前显示的 Tab 已保存。" },
+  "statusSavedAllTabs": { "message": "所有已打开的 Tab 已保存。" },
+  "statusExported": { "message": "收藏数据已导出。" },
+  "statusImported": { "message": "导入完成，收藏夹已合并到当前数据。" },
+  "statusOpenedFavorite": { "message": "已在新窗口中打开这个收藏夹。" },
+  "statusPinUpdated": { "message": "收藏夹置顶状态已更新。" },
+  "statusDeletedFavorite": { "message": "收藏夹已删除。" },
+  "statusSavedChanges": { "message": "收藏夹修改已保存。" },
+  "unknownError": { "message": "发生未知错误。" },
+  "detailTabsUpdatedAt": {
+    "message": "$COUNT$ 个标签页 | $DATE$",
+    "placeholders": {
+      "count": { "content": "$1" },
+      "date": { "content": "$2" }
+    }
+  },
+  "previewEmptyFavorite": { "message": "这个收藏夹里还没有可打开的标签页。" },
+  "previewMoreTabs": {
+    "message": "还有 $COUNT$ 个标签页...",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "itemTitlePlaceholder": { "message": "条目标题" },
+  "itemUrlPlaceholder": { "message": "https://example.com" },
+  "deleteItem": { "message": "删除条目" },
+  "defaultCurrentTabCollectionName": {
+    "message": "当前 Tab $DATE$",
+    "placeholders": {
+      "date": { "content": "$1" }
+    }
+  },
+  "defaultAllTabsCollectionName": {
+    "message": "全部 Tab $DATE$",
+    "placeholders": {
+      "date": { "content": "$1" }
+    }
+  },
+  "errorUnsupportedMessage": { "message": "不支持的消息类型。" },
+  "errorCollectionNotFound": { "message": "未找到收藏夹。" },
+  "errorNoValidTabs": { "message": "这个收藏夹里没有可用的标签页。" },
+  "errorImportInvalid": { "message": "导入文件无效。" },
+  "defaultUntitledCollection": { "message": "未命名收藏夹" },
+  "defaultImportedCollection": { "message": "导入的收藏夹" },
+  "defaultImportedSession": { "message": "导入的会话" },
+  "defaultUntitledTab": { "message": "未命名标签页" }
+}

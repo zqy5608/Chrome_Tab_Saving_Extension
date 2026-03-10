@@ -4,6 +4,7 @@ import {
   exportCollections,
   getCollections,
   importCollections,
+  updateCollection,
   toggleCollectionPinned
 } from "./lib/storage.js";
 
@@ -26,10 +27,14 @@ async function handleMessage(message) {
   switch (message?.type) {
     case "GET_COLLECTIONS":
       return getCollections();
-    case "SAVE_CURRENT_WINDOW":
-      return saveCurrentWindow(message.payload?.name);
+    case "SAVE_CURRENT_TAB":
+      return saveCurrentTab();
+    case "SAVE_ALL_TABS":
+      return saveAllTabs();
     case "OPEN_COLLECTION":
       return openCollection(message.payload?.collectionId);
+    case "UPDATE_COLLECTION":
+      return updateCollection(message.payload?.collectionId, message.payload?.updates);
     case "DELETE_COLLECTION":
       return deleteCollection(message.payload?.collectionId);
     case "TOGGLE_COLLECTION_PINNED":
@@ -39,18 +44,37 @@ async function handleMessage(message) {
     case "IMPORT_DATA":
       return importCollections(message.payload);
     default:
-      throw new Error("Unsupported message type.");
+      throw new Error(t("errorUnsupportedMessage"));
   }
 }
 
-async function saveCurrentWindow(customName) {
-  const currentWindowTabs = await chrome.tabs.query({ currentWindow: true });
+async function saveCurrentTab() {
+  const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const now = new Date();
+  const currentTab = activeTabs[0];
+
+  return createCollection({
+    name: t("defaultCurrentTabCollectionName", [now.toLocaleString()]),
+    tabs: currentTab
+      ? [
+          {
+            title: currentTab.title || t("defaultUntitledTab"),
+            url: currentTab.url || "",
+            favIconUrl: currentTab.favIconUrl || ""
+          }
+        ]
+      : []
+  });
+}
+
+async function saveAllTabs() {
+  const tabs = await chrome.tabs.query({});
   const now = new Date();
 
   return createCollection({
-    name: customName?.trim() || `Collection ${now.toLocaleString()}`,
-    tabs: currentWindowTabs.map((tab) => ({
-      title: tab.title || "Untitled Tab",
+    name: t("defaultAllTabsCollectionName", [now.toLocaleString()]),
+    tabs: tabs.map((tab) => ({
+      title: tab.title || t("defaultUntitledTab"),
       url: tab.url || "",
       favIconUrl: tab.favIconUrl || ""
     }))
@@ -62,14 +86,18 @@ async function openCollection(collectionId) {
   const collection = collections.find((item) => item.id === collectionId);
 
   if (!collection) {
-    throw new Error("Collection not found.");
+    throw new Error(t("errorCollectionNotFound"));
   }
 
   const urls = collection.tabs.map((tab) => tab.url).filter(Boolean);
   if (urls.length === 0) {
-    throw new Error("This collection has no valid tabs.");
+    throw new Error(t("errorNoValidTabs"));
   }
 
   await chrome.windows.create({ url: urls });
   return collections;
+}
+
+function t(key, substitutions) {
+  return chrome.i18n.getMessage(key, substitutions) || key;
 }

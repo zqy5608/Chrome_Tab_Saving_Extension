@@ -1,42 +1,39 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tab Saver</title>
+    <title data-i18n="extensionShortTitle">Tab Saver</title>
     <link rel="stylesheet" href="./popup.css" />
   </head>
   <body>
     <main class="popup">
       <section class="hero">
-        <p class="eyebrow">Chrome Extension</p>
-        <h1>Tab 收藏库</h1>
-        <p class="subtitle">永久保存标签页，按 Collection 分类管理，一键重新打开。</p>
+        <p class="eyebrow" data-i18n="heroEyebrow">Chrome Extension</p>
+        <h1 data-i18n="heroTitle">Tab Favorites</h1>
+        <p class="subtitle" data-i18n="heroSubtitle">Save tabs permanently, organize them into favorites, and reopen them with one click.</p>
       </section>
 
       <section class="actions">
         <div class="toolbar">
-          <button id="export-button" class="ghost">导出数据</button>
-          <button id="import-button" class="ghost">导入数据</button>
+          <button id="export-button" class="ghost" data-i18n="exportData">Export data</button>
+          <button id="import-button" class="ghost" data-i18n="importData">Import data</button>
           <input id="import-file" type="file" accept="application/json" hidden />
         </div>
 
-        <button id="quick-save-button" class="primary">一键保存当前全部 Tab</button>
-
-        <label class="field">
-          <span>Collection 名称</span>
-          <input id="collection-name" type="text" placeholder="例如：工作 / 学习 / 购物" />
-        </label>
-        <button id="save-button" class="secondary">按名称保存到 Collection</button>
+        <div class="save-actions">
+          <button id="save-current-tab-button" class="primary" data-i18n="saveCurrentTab">Save current visible tab</button>
+          <button id="save-all-tabs-button" class="secondary" data-i18n="saveAllTabs">Save all open tabs</button>
+        </div>
         <p id="status-message" class="status-message" hidden></p>
       </section>
 
       <section class="collections">
         <div class="section-header">
-          <h2>我的 Collections</h2>
+          <h2 data-i18n="myFavorites">My favorites</h2>
           <span id="collection-count" class="count">0</span>
         </div>
-        <div id="empty-state" class="empty-state">还没有收藏，先保存当前窗口试试看。</div>
+        <div id="empty-state" class="empty-state" data-i18n="emptyState">No favorites yet. Try saving the current window first.</div>
         <ul id="collection-list" class="collection-list"></ul>
       </section>
     </main>
@@ -47,17 +44,33 @@
           <div class="collection-meta">
             <div class="collection-title-row">
               <p class="collection-name"></p>
-              <span class="pin-badge" hidden>置顶</span>
+              <span class="pin-badge" data-i18n="pinBadge" hidden>Pinned</span>
             </div>
             <p class="collection-detail"></p>
           </div>
           <div class="button-row">
-            <button class="ghost" data-role="open">打开</button>
-            <button class="ghost" data-role="pin">置顶</button>
-            <button class="ghost danger" data-role="delete">删除</button>
+            <button class="ghost" data-role="open" data-i18n="open">Open</button>
+            <button class="ghost" data-role="toggle-edit" data-i18n="edit">Edit</button>
+            <button class="ghost" data-role="pin" data-i18n="pin">Pin</button>
+            <button class="ghost danger" data-role="delete" data-i18n="delete">Delete</button>
           </div>
         </div>
         <ol class="tab-preview"></ol>
+        <form class="editor" hidden>
+          <label class="field">
+            <span data-i18n="favoritesName">Favorites name</span>
+            <input class="collection-edit-name" type="text" />
+          </label>
+          <div class="editor-header">
+            <span data-i18n="itemList">Items</span>
+            <button type="button" class="ghost small-button" data-role="add-tab" data-i18n="addItem">Add item</button>
+          </div>
+          <div class="editor-tabs"></div>
+          <div class="editor-actions">
+            <button type="submit" class="secondary" data-i18n="saveChanges">Save changes</button>
+            <button type="button" class="ghost" data-role="cancel-edit" data-i18n="cancel">Cancel</button>
+          </div>
+        </form>
       </li>
     </template>
 
