@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,35 +10,52 @@
     <main class="popup">
       <section class="hero">
         <p class="eyebrow">Chrome Extension</p>
-        <h1>Tab Saver</h1>
-        <p class="subtitle">Save the current window now, polish the workflow next.</p>
+        <h1>Tab 收藏库</h1>
+        <p class="subtitle">永久保存标签页，按 Collection 分类管理，一键重新打开。</p>
       </section>
 
       <section class="actions">
+        <div class="toolbar">
+          <button id="export-button" class="ghost">导出数据</button>
+          <button id="import-button" class="ghost">导入数据</button>
+          <input id="import-file" type="file" accept="application/json" hidden />
+        </div>
+
         <label class="field">
-          <span>Session name</span>
-          <input id="session-name" type="text" placeholder="Optional custom name" />
+          <span>Collection 名称</span>
+          <input id="collection-name" type="text" placeholder="例如：工作 / 学习 / 购物" />
         </label>
-        <button id="save-button" class="primary">Save current window</button>
+        <button id="save-button" class="primary">保存当前窗口到 Collection</button>
+        <p id="status-message" class="status-message" hidden></p>
       </section>
 
-      <section class="sessions">
+      <section class="collections">
         <div class="section-header">
-          <h2>Saved sessions</h2>
-          <span id="session-count" class="count">0</span>
+          <h2>我的 Collections</h2>
+          <span id="collection-count" class="count">0</span>
         </div>
-        <div id="empty-state" class="empty-state">No sessions yet.</div>
-        <ul id="session-list" class="session-list"></ul>
+        <div id="empty-state" class="empty-state">还没有收藏，先保存当前窗口试试看。</div>
+        <ul id="collection-list" class="collection-list"></ul>
       </section>
     </main>
 
-    <template id="session-item-template">
-      <li class="session-item">
-        <div class="session-meta">
-          <p class="session-name"></p>
-          <p class="session-detail"></p>
+    <template id="collection-item-template">
+      <li class="collection-item">
+        <div class="collection-top">
+          <div class="collection-meta">
+            <div class="collection-title-row">
+              <p class="collection-name"></p>
+              <span class="pin-badge" hidden>置顶</span>
+            </div>
+            <p class="collection-detail"></p>
+          </div>
+          <div class="button-row">
+            <button class="ghost" data-role="open">打开</button>
+            <button class="ghost" data-role="pin">置顶</button>
+            <button class="ghost danger" data-role="delete">删除</button>
+          </div>
         </div>
-        <button class="ghost danger" data-role="delete">Delete</button>
+        <ol class="tab-preview"></ol>
       </li>
     </template>
 

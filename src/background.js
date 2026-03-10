@@ -1,7 +1,14 @@
-import { getSavedSessions, removeSession, saveSession } from "./lib/storage.js";
+import {
+  createCollection,
+  deleteCollection,
+  exportCollections,
+  getCollections,
+  importCollections,
+  toggleCollectionPinned
+} from "./lib/storage.js";
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Tab Saver Starter installed.");
+  console.log("Tab Saver installed.");
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -17,12 +24,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 async function handleMessage(message) {
   switch (message?.type) {
-    case "GET_SESSIONS":
-      return getSavedSessions();
+    case "GET_COLLECTIONS":
+      return getCollections();
     case "SAVE_CURRENT_WINDOW":
       return saveCurrentWindow(message.payload?.name);
-    case "DELETE_SESSION":
-      return removeSession(message.payload?.sessionId);
+    case "OPEN_COLLECTION":
+      return openCollection(message.payload?.collectionId);
+    case "DELETE_COLLECTION":
+      return deleteCollection(message.payload?.collectionId);
+    case "TOGGLE_COLLECTION_PINNED":
+      return toggleCollectionPinned(message.payload?.collectionId);
+    case "EXPORT_DATA":
+      return exportCollections();
+    case "IMPORT_DATA":
+      return importCollections(message.payload);
     default:
       throw new Error("Unsupported message type.");
   }
@@ -31,16 +46,30 @@ async function handleMessage(message) {
 async function saveCurrentWindow(customName) {
   const currentWindowTabs = await chrome.tabs.query({ currentWindow: true });
   const now = new Date();
-  const session = {
-    id: crypto.randomUUID(),
-    name: customName?.trim() || `Session ${now.toLocaleString()}`,
-    createdAt: now.toISOString(),
+
+  return createCollection({
+    name: customName?.trim() || `Collection ${now.toLocaleString()}`,
     tabs: currentWindowTabs.map((tab) => ({
       title: tab.title || "Untitled Tab",
       url: tab.url || "",
       favIconUrl: tab.favIconUrl || ""
     }))
-  };
+  });
+}
 
-  return saveSession(session);
+async function openCollection(collectionId) {
+  const collections = await getCollections();
+  const collection = collections.find((item) => item.id === collectionId);
+
+  if (!collection) {
+    throw new Error("Collection not found.");
+  }
+
+  const urls = collection.tabs.map((tab) => tab.url).filter(Boolean);
+  if (urls.length === 0) {
+    throw new Error("This collection has no valid tabs.");
+  }
+
+  await chrome.windows.create({ url: urls });
+  return collections;
 }

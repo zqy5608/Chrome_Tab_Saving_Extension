@@ -1,15 +1,16 @@
 # Chrome Tab Saving Extension
 
-This is a Manifest V3 starter for a Chrome extension focused on saving browser tabs.
+This is a Manifest V3 Chrome extension for permanently saving browser tabs as collections.
 
-## Current foundation
+## Current features
 
-- Manifest V3 setup
-- Background service worker
-- Popup UI
-- Local storage for saved tab sessions
-- Save current window
-- Delete saved sessions
+- Save the current window as a persistent collection
+- Reopen a collection with one click in a new window
+- Organize tabs by collection name
+- Pin important collections to the top
+- Export all saved data to JSON
+- Import JSON data and merge it into current data
+- Automatically migrate legacy saved session data
 
 ## Load the extension
 
@@ -20,7 +21,7 @@ This is a Manifest V3 starter for a Chrome extension focused on saving browser t
 
 ## Suggested next steps
 
-- Restore a saved session into a new window
-- Export and import sessions
-- Add icons and polish copy
-- Add search, grouping, and deduplication
+- Edit collection names and tab lists
+- Support saving selected tabs only
+- Add icons and localized text
+- Add search and duplicate cleanup

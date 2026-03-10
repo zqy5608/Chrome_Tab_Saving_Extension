@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Tab Saver Starter",
-  "description": "A foundation for saving and restoring Chrome tabs.",
+  "name": "Tab Saver Collections",
+  "description": "Save tabs permanently, organize them into collections, and reopen them with one click.",
   "version": "0.1.0",
   "permissions": ["tabs", "storage"],
   "host_permissions": ["<all_urls>"],
